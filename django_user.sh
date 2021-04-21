@@ -18,6 +18,8 @@ else:
 "
 printf "$script" | python manage.py shell
 
+#manul add django user:   python manage.py createsuperuser
+
 # 如果想直接进入/vagrant路径下
 # 请输入vagrant ssh命令进入
 # 手动输入
