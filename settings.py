@@ -25,7 +25,7 @@ SECRET_KEY = 'g20q2b3+#2n@x(-u0az^1ptc361%ipvybn=lq)r+l$q0awc#m('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.25.94.216', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '172.17.189.89', 'localhost']
 
 
 # Application definition
@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     # third party
     'rest_framework',
     # project apps
-    'accounts'
+    'accounts',
+    'tweets'
 ]
 
 

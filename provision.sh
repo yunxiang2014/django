@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 echo 'Start!'
-sudo mkdir /vagrant
-sudo mount -t cifs //DESKTOP-7G671MS/django /vagrant -o username=ychai,password=ychai
+#sudo mkdir /vagrant
+#sudo mount -t cifs //DESKTOP-7G671MS/django /vagrant -o username=ychai,password=ychai
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.6 2
 
 cd /vagrant
