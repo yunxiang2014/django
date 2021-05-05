@@ -6,7 +6,6 @@ from rest_framework import serializers, exceptions
 #        model = User
 #        fields = ['url', 'username', 'email']
 
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -32,18 +31,17 @@ class SignupSerializer(serializers.ModelSerializer):
                 'message': 'This email address has been occupied.'
         })
         return data
+
     def create(self, validated_data):
         username = validated_data['username'].lower()
         email = validated_data['email'].lower()
         password = validated_data['password']
-
         user = User.objects.create_user(
             username=username,
             email=email,
             password=password,
         )
         return user
-
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
