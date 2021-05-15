@@ -25,7 +25,7 @@ SECRET_KEY = 'g20q2b3+#2n@x(-u0az^1ptc361%ipvybn=lq)r+l$q0awc#m('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.31.188.112', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '172.24.76.93', 'localhost']
 
 
 # Application definition
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # project apps
     'accounts',
     'tweets',
+    'friendships',
 ]
 
 
@@ -139,4 +140,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-INTERNAL_IPS = ['172.31.176.1']
+INTERNAL_IPS = ['172.24.76.93']
