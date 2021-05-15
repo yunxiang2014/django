@@ -5,7 +5,7 @@ from tweets.models import Tweet
 
 class TestCase(DjangoTestCase):
 
-    def create_user(self, username, email, password=None):
+    def create_user(self, username, email=None, password=None):
         if password is None:
             password = 'generic password'
             # 不能 写成 user.onjects.create()
@@ -16,3 +16,5 @@ class TestCase(DjangoTestCase):
         if content is None:
             content = 'default tweet content'
         return Tweet.objects.create(user=user, content=content)
+
+
