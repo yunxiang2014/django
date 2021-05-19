@@ -51,12 +51,12 @@ class TweetApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
         #content 不能太长
-        response = self.user1_client.post(TWEET_CREATE_API, {'content': '0'*141 })
+        response = self.user1_client.post(TWEET_CREATE_API, {'content': '0'*141})
         self.assertEqual(response.status_code, 400)
 
         #正常发帖
         tweets_count = Tweet.objects.count()
-        response = self.user1_client.post(TWEET_CREATE_API,{
+        response = self.user1_client.post(TWEET_CREATE_API, {
             'content': 'Hello Word, this is my first tweet!'
         })
         self.assertEqual(response.status_code, 201)
