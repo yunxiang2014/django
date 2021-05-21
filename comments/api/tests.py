@@ -1,5 +1,7 @@
-from testing.testcases import TestCase
+from comments.models import Comment
+from django.utils import timezone
 from rest_framework.test import APIClient
+from testing.testcases import TestCase
 
 # Create your tests here.
 
@@ -53,3 +55,38 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['user']['id'], self.linghu.id)
         self.assertEqual(response.data['tweet_id'], self.tweet.id)
         self.assertEqual(response.data['content'], '1')
+
+    def test_update(self):
+        comment = self.create_comment(self.linghu, self.tweet, 'original')
+        another_tweet = self.create_tweet(self.dongxie)
+        url = '{}{}/'.format(COMMENT_URL, comment.id)
+
+        # 使用put 的情况下
+        # 匿名不可以更新
+        response = self.anonymous_client.put(url, {'content': 'new'})
+        self.assertEqual(response.status_code, 403)
+
+        #非本人不能更新
+        response = self.dongxie_client.put(url, {'content': 'new'})
+        self.assertEqual(response.status_code, 403)
+        comment.refresh_from_db()
+        self.assertEqual(comment.content, 'original')
+
+        # 不能更新除 content 外的内容， 静默除了， 只更新内容
+        before_updated_at = comment.updated_at
+        before_created_at = comment.created_at
+        now = timezone.now()
+        response = self.linghu_client.put(url, {
+            'content': 'new',
+            'user_id': self.dongxie.id,
+            'tweet_id': another_tweet.id,
+            'created_at': now,
+        })
+        self.assertEqual(response.status_code, 200)
+        comment.refresh_from_db()
+        self.assertEqual(comment.content, 'new')
+        self.assertEqual(comment.user, self.linghu)
+        self.assertEqual(comment.tweet, self.tweet)
+        self.assertEqual(comment.created_at, before_created_at)
+        #self.assertEqual(comment.created_at, now)
+        #self.assertEqual(comment.updated_at, before_updated_at)
