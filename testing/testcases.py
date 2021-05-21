@@ -1,6 +1,7 @@
 from django.test import TestCase as DjangoTestCase
 from django.contrib.auth.models import User
 from tweets.models import Tweet
+from comments.models import Comment
 
 
 class TestCase(DjangoTestCase):
@@ -17,4 +18,5 @@ class TestCase(DjangoTestCase):
             content = 'default tweet content'
         return Tweet.objects.create(user=user, content=content)
 
-
+    def create_comment(self, user, tweet, content=None):
+        return Comment.objects.create(user=user, tweet=tweet, content=content)
