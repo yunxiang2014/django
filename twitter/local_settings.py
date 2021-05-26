@@ -1,9 +1,12 @@
 # checkout https://www.neilwithdata.com/django-sql-logging
+
+
 LOGGING = {
     'version': 1,
     'filters': {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
+
         }
     },
     'handlers': {
