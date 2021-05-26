@@ -93,6 +93,7 @@ class CommentApiTests(TestCase):
 
     def test_list(self):
         # 必须带 tweet_id
+        # /api/comments/?tweet_id=2
         response = self.anonymous_client.get(COMMENT_URL)
         self.assertEqual(response.status_code, 400)
 

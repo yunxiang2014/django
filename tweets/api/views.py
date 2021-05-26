@@ -1,15 +1,16 @@
-from django.shortcuts import render
+# Create your views here.
+from newsfeeds.services import NewsFeedService
+from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-
-from newsfeeds.services import NewsFeedService
+from tweets.api.serializers import TweetCreateSerializer, TweetSerializer, TweetSerializerWithComments
 from tweets.models import Tweet
-from tweets.api.serializers import TweetCreateSerializer, TweetSerializer
-# Create your views here.
-from rest_framework import viewsets
+from utils.decorators import required_params
 
 
-class TweetViewSet(viewsets.GenericViewSet, viewsets.mixins.CreateModelMixin, viewsets.mixins.ListModelMixin):
+class TweetViewSet(viewsets.GenericViewSet,
+                   viewsets.mixins.CreateModelMixin,
+                   viewsets.mixins.ListModelMixin):
     """
     API endpoint that allows user to create, list tweets
     """
@@ -17,9 +18,15 @@ class TweetViewSet(viewsets.GenericViewSet, viewsets.mixins.CreateModelMixin, vi
     serializer_class = TweetCreateSerializer
 
     def get_permissions(self):
-        if self.action == 'list':
+        if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def retrieve(self, request, *args, **kwargs):
+        # <Homework 1> 通过某个 query 参数 with_all_comments 来决定是否需要带上所有comments
+        # <Homework 2> 通过某个 query 参数 with_preview_comments 来决定是否需要带上前三条 comments
+        tweet = self.get_object()
+        return Response(TweetSerializerWithComments(tweet).data)
 
     def create(self, request, *args, **kwargs):
         """
@@ -39,13 +46,8 @@ class TweetViewSet(viewsets.GenericViewSet, viewsets.mixins.CreateModelMixin, vi
         NewsFeedService.fanout_to_followers(tweet)
         return Response(TweetSerializer(tweet).data, status=201)
 
+    @required_params(params=['user_id'])
     def list(self, request, *args, **kwargs):
-        """
-        重载 list 方法， 不列出所有tweets, 必须要求指定 user_id 作为条件
-        """
-        if 'user_id' not in request.query_params:
-            return Response('missing user_id', status=400)
-
         # 这句话 查询会被 翻译为
         # select * from twitter_tweets
         #  where user_id = xx
@@ -59,3 +61,6 @@ class TweetViewSet(viewsets.GenericViewSet, viewsets.mixins.CreateModelMixin, vi
         # 一般来说 json 格式的 response 默认都要用 hash 的格式
         # 而不能用 list 的格式（约定俗称）
         return Response({'tweets': serializer.data})
+
+
+

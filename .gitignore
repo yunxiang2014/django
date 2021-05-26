@@ -1,0 +1,21 @@
+*.box
+.vagrant
+Vagrantfile
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Pyre type checker
+.idea/*
+.pyre/
+/.pycharm_helpers/
+
+
+#Django stuff
+*.log
+local_settings.py
