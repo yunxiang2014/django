@@ -18,8 +18,9 @@ class CommentApiTests(TestCase):
         self.dongxie = self.create_user('dongxie')
         self.dongxie_client = APIClient()
         self.dongxie_client.force_authenticate(self.dongxie)
-
         self.tweet = self.create_tweet(self.linghu)
+        self.tweet1 = self.create_tweet(self.linghu)
+        self.comment = self.create_comment(self.linghu, self.tweet1, 'original')
 
     def test_create(self):
         # 匿名不可以创建
@@ -66,7 +67,7 @@ class CommentApiTests(TestCase):
         response = self.anonymous_client.put(url, {'content': 'new'})
         self.assertEqual(response.status_code, 403)
 
-        #非本人不能更新
+        # 非本人不能更新
         response = self.dongxie_client.put(url, {'content': 'new'})
         self.assertEqual(response.status_code, 403)
         comment.refresh_from_db()
@@ -88,8 +89,8 @@ class CommentApiTests(TestCase):
         self.assertEqual(comment.user, self.linghu)
         self.assertEqual(comment.tweet, self.tweet)
         self.assertEqual(comment.created_at, before_created_at)
-        #self.assertEqual(comment.created_at, now)
-        #self.assertEqual(comment.updated_at, before_updated_at)
+        # self.assertEqual(comment.created_at, now)
+        # self.assertEqual(comment.updated_at, before_updated_at)
 
     def test_list(self):
         # 必须带 tweet_id
@@ -122,3 +123,16 @@ class CommentApiTests(TestCase):
             'user_id': self.linghu.id,
         })
         self.assertEqual(len(response.data['comments']), 2)
+
+    def test_comment(self):
+        self.assertEqual(self.comment.content, 'original')
+
+    def test_like_set(self):
+        self.create_like(self.linghu, self.comment)
+        self.assertEqual(self.comment.like_set.count(), 1)
+
+        self.create_like(self.linghu, self.comment)
+        self.assertEqual(self.comment.like_set.count(), 1)
+
+        self.create_like(self.dongxie, self.comment)
+        self.assertEqual(self.comment.like_set.count(), 2)

@@ -1,6 +1,8 @@
 from rest_framework.test import APIClient
 from testing.testcases import TestCase
 from tweets.models import Tweet
+from datetime import timedelta
+from utils.time_helpers import utc_now
 
 # 注意 要加 ‘/' 结尾， 要不然会产生 301 redirect
 TWEET_LIST_API = '/api/tweets/'
@@ -12,7 +14,8 @@ class TweetApiTests(TestCase):
 
     def setUp(self):
         self.anonymous_client = APIClient()
-
+        self.linghu = self.create_user('linghu')
+        self.tweet = self.create_tweet(self.linghu, content='jiuzhang dafa hao')
         self.user1 = self.create_user('user1', 'user1@jiuzhang.com')
         self.tweets1 = [self.create_tweet(self.user1) for i in range(3)]
         self.user1_client = APIClient()
@@ -81,3 +84,21 @@ class TweetApiTests(TestCase):
         self.create_comment(self.user1, tweet, 'hm...')
         response = self.anonymous_client.get(url)
         self.assertEqual(len(response.data['comments']), 2)
+
+    def test_hours_to_now(self):
+        self.tweet.created_at = utc_now() - timedelta(hours=10)
+        self.tweet.save()
+        self.assertEqual(self.tweet.hours_to_now, 10)
+
+    def test_like_set(self):
+        # which user like which tweet
+        self.create_like(self.linghu, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 1)
+        # 没有 重复like
+        self.create_like(self.linghu, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 1)
+
+        # 同一个tweet 有多少like
+        dongxie = self.create_user('dongxie')
+        self.create_like(dongxie, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 2)
