@@ -2,8 +2,6 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from likes.models import Like
-
-# Create your models here.
 from tweets.models import Tweet
 
 
