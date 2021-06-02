@@ -9,3 +9,5 @@ https://www.django-rest-framework.org/
 use database;
 show tables;
 explan
+
+pip freeze > requirements.txt
