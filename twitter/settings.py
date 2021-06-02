@@ -23,7 +23,7 @@ SECRET_KEY = 'g20q2b3+#2n@x(-u0az^1ptc361%ipvybn=lq)r+l$q0awc#m('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.24.76.93', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '172.22.152.47', 'localhost']
 
 # Application definition
 
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'debug_toolbar',
     'django_filters',
+    'notifications',
     # project apps
     'accounts',
     'tweets',
@@ -137,7 +138,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-INTERNAL_IPS = ['172.24.76.93']
+INTERNAL_IPS = ['172.22.152.47']
 
 try:
     from .local_settings import *
