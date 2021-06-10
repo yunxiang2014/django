@@ -22,7 +22,7 @@ Including another URLconf
 # ]
 
 from accounts.api import views
-from accounts.api.views import UserViewSet, AccountViewSet
+from accounts.api.views import UserViewSet, AccountViewSet, UserProfileViewSet
 from comments.api.views import CommentViewSet
 from django.conf import settings
 from django.contrib import admin
@@ -43,6 +43,8 @@ router.register(r'api/newsfeeds', NewsFeedViewSet, basename='newsfeeds')
 router.register(r'api/comments', CommentViewSet, basename='comments')
 router.register(r'api/likes', LikeViewSet, basename='likes')
 router.register(r'api/notifications', NotificationViewSet, basename='notifications')
+router.register(r'api/profiles', UserProfileViewSet, basename='profiles')
+
 
 
 
