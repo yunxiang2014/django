@@ -4,10 +4,11 @@ from likes.services import LikeService
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from tweets.models import Tweet
+from accounts.api.serializers import UserSerializerForComment
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    user = UserSerializerForComment()
     likes_count = serializers.SerializerMethodField()
     has_liked = serializers.SerializerMethodField()
 

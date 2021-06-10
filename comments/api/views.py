@@ -8,7 +8,7 @@ from comments.api.serializers import (
     CommentSerializerForCreate,
     CommentSerializerForUpdate,
                                       )
-from comments.api.permissions import IsObjectOwner
+from utils.permissions import IsObjectOwner
 from utils.decorators import required_params
 
 # Create your views here.

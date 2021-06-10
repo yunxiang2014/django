@@ -1,27 +1,23 @@
-#from django.contrib.auth.models import User, Group
-#from rest_framework import viewsets
-#from rest_framework import permissions
-#from accounts.api.serializers import UserSerializer
 from accounts.api.serializers import UserSerializer
 from django.contrib.auth.models import User
 from rest_framework import permissions
 from rest_framework import viewsets
-from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from django.contrib.auth import (
     authenticate as django_authenticate,
     login as django_login,
     logout as django_logout,
 )
-from accounts.api.serializers import SignupSerializer, LoginSerializer
-#class UserViewSet(viewsets.ModelViewSet):
-#    """
-#    API endpoint that allows users to be viewed or edited.
-#    """
-#    queryset = User.objects.all().order_by('-date_joined')
-#    serializer_class = UserSerializer
-#    permission_classes = [permissions.IsAuthenticated]
+from accounts.api.serializers import (
+    SignupSerializer,
+    LoginSerializer,
+    UserSerializerWithProfile,
+    UserProfileSerializerForUpdate,
+)
+from accounts.models import UserProfile
+from utils.permissions import IsObjectOwner
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -29,8 +25,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserSerializerWithProfile
+    permission_classes = (permissions.IsAdminUser,)
 
 
 class AccountViewSet(viewsets.ViewSet):
@@ -69,7 +65,7 @@ class AccountViewSet(viewsets.ViewSet):
         return Response({
             'success': True,
             'user': UserSerializer(user).data,
-        },status=201)
+        }, status=201)
 
     @action(methods=['POST'], detail=False)
     def login(self, request):
@@ -103,12 +99,11 @@ class AccountViewSet(viewsets.ViewSet):
         查看用户当前的登录状态和具体信息
         """
         data = {'has_logged_in': request.user.is_authenticated,
-                'ip' : request.META['REMOTE_ADDR']
+                'ip': request.META['REMOTE_ADDR']
                 }
         if request.user.is_authenticated:
             data['user'] = UserSerializer(request.user).data
         return Response(data)
-
 
     @action(methods=['POST'], detail=False)
     def logout(self, request):
@@ -117,3 +112,10 @@ class AccountViewSet(viewsets.ViewSet):
         """
         django_logout(request)
         return Response({"success": True})
+
+
+# 继承 updateModelMixin, 会有update 方法 update
+class UserProfileViewSet(viewsets.GenericViewSet, viewsets.mixins.UpdateModelMixin, ):
+    queryset = UserProfile
+    permission_classes = (IsObjectOwner,)
+    serializer_class = UserProfileSerializerForUpdate

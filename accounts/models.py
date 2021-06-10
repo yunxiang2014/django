@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-class UserProfile(models.Model):
+class UserProfile(models.Model):     # 单独定义 userprofile model
     # One2One field 会创建一个 unique index，确保不会有多个 UserProfile 指向同一个 User
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
     # Django 还有一个 ImageField，但是尽量不要用，会有很多的其他问题，用 FileField 可以起到

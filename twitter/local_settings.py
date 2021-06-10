@@ -1,5 +1,7 @@
 # checkout https://www.neilwithdata.com/django-sql-logging
 
+AWS_ACCESS_KEY_ID = 'AKIAYZTT7ISWZPL7ZQF2'
+AWS_SECRET_ACCESS_KEY = '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'
 
 LOGGING = {
     'version': 1,

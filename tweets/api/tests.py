@@ -84,6 +84,10 @@ class TweetApiTests(TestCase):
         self.create_comment(self.user1, tweet, 'hm...')
         response = self.anonymous_client.get(url)
         self.assertEqual(len(response.data['comments']), 2)
+        # tweet 里包含用户的头像和昵称
+        profile = self.user1.profile
+        self.assertEqual(response.data['user']['nickname'], profile.nickname)
+        self.assertEqual(response.data['user']['avatar_url'], None)
 
     def test_hours_to_now(self):
         self.tweet.created_at = utc_now() - timedelta(hours=10)
@@ -102,3 +106,5 @@ class TweetApiTests(TestCase):
         dongxie = self.create_user('dongxie')
         self.create_like(dongxie, self.tweet)
         self.assertEqual(self.tweet.like_set.count(), 2)
+
+
