@@ -1,14 +1,11 @@
 from django.contrib.auth.models import User
-from django.shortcuts import render
+from friendships.api.paginations import FriendshipPagination
+from friendships.api.serializers import FollowerSerializer, FriendshipSerializerForCreate, FollowingSerializer
+from friendships.models import Friendship
 from rest_framework import viewsets, status
-
-# Create your views here.
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-
-from friendships.api.serializers import FollowerSerializer, FriendshipSerializerForCreate, FollowingSerializer
-from friendships.models import Friendship
 
 
 class FriendshipViewSet(viewsets.GenericViewSet):
@@ -19,41 +16,39 @@ class FriendshipViewSet(viewsets.GenericViewSet):
     # queryset.filer(pk=1) 查询一下这个object 在不在
     serializer_class = FriendshipSerializerForCreate
     queryset = User.objects.all()
+    # 一般来说，不同的 views 所需要的 pagination 规则肯定是不同的，因此一般都需要自定义
+    pagination_class = FriendshipPagination
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     def followers(self, request, pk):
         # get /api/friendships/1/followers/
         # get http://172.24.76.93:8000/api/friendships/3/followers/
         friendships = Friendship.objects.filter(to_user_id=pk).order_by('-created_at')
-        serializer = FollowerSerializer(friendships, many=True)
-        return Response(
-            {'followers': serializer.data},
-            status=status.HTTP_200_OK,
-        )
+        page = self.paginate_queryset(friendships)
+        serializer = FollowerSerializer(page, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     def followings(self, request, pk):
         friendships = Friendship.objects.filter(from_user_id=pk).order_by('-created_at')
-        serializer = FollowingSerializer(friendships, many=True)
-        return Response(
-            {'followings': serializer.data},
-            status=status.HTTP_200_OK,
-        )
+        page = self.paginate_queryset(friendships)
+        serializer = FollowingSerializer(page, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
     def follow(self, request, pk):
         # check i fuser with id=pk exists
-        #self.get_object()
-        #特殊判断重复 follow 的情况 （比如前端猛点多次follow）
-        #静默处理， 不报错， 因为这类重复操作 因为网络延迟的原因会比较多， 没必要当做错误处理
+        # self.get_object()
+        # 特殊判断重复 follow 的情况 （比如前端猛点多次follow）
+        # 静默处理， 不报错， 因为这类重复操作 因为网络延迟的原因会比较多， 没必要当做错误处理
         if Friendship.objects.filter(from_user=request.user, to_user=pk).exists():
             return Response({
                 'success': True,
                 'duplicate': True,
             }, status=status.HTTP_201_CREATED)
         serializer = FriendshipSerializerForCreate(data={
-                'from_user_id': request.user.id,
-                'to_user_id': pk,
+            'from_user_id': request.user.id,
+            'to_user_id': pk,
         })
         if not serializer.is_valid():
             return Response({
@@ -63,12 +58,12 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         serializer.save()
         return Response({'success': True}, status=status.HTTP_201_CREATED)
 
-    @action(methods=['POST'],detail=True, permission_classes=[IsAuthenticated])
+    @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
     def unfollow(self, request, pk):
         # check user is exists, raise 404 if no user id == pk  http://172.24.76.93:8000/api/friendships/6/unfollow/
         unfollow_user = self.get_object()
-        #self.get_object()
-        #注意 pk 的类型是str, 所以要做类型转换
+        # self.get_object()
+        # 注意 pk 的类型是str, 所以要做类型转换
         if request.user.id == unfollow_user.id:
             return Response({
                 'success': False,
@@ -91,4 +86,3 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         return Response({
             'message': 'this is friendships home page',
         })
-
