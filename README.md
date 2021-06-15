@@ -11,3 +11,6 @@ show tables;
 explan
 
 pip freeze > requirements.txt
+
+start memcached
+/usr/bin/memcached -u memcache -m 1024 -p 11222 -l 0.0.0.0 -d start
