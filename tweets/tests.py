@@ -14,6 +14,7 @@ from utils.time_helpers import utc_now
 class TweetTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
         self.linghu = self.create_user(username='linghu')
         self.tweet = self.create_tweet(self.linghu, content='Jiuzhang dafa good')
 

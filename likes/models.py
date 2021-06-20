@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from accounts.services import UserService
 
 
 # Create your models here.
@@ -28,3 +29,7 @@ class Like(models.Model):
 
     def __str__(self):
         return '{} - {} liked {} {}'.format(self.created_at, self.user, self.content_type, self.object_id)
+
+    @property
+    def cached_user(self):
+        return UserService.get_user_through_cache(self.user_id)

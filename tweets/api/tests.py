@@ -16,6 +16,7 @@ TWEET_RETRIVE_API = '/api/tweets/{}/'
 class TweetApiTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
         self.anonymous_client = APIClient()
         self.linghu = self.create_user('linghu')
         self.tweet = self.create_tweet(self.linghu, content='jiuzhang dafa hao')
