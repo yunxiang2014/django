@@ -3,6 +3,7 @@ from newsfeeds.models import NewsFeed
 from rest_framework.test import APIClient
 from testing.testcases import TestCase
 from utils.paginations import EndlessPagination
+import json
 
 NEWSFEEDS_URL = '/api/newsfeeds/'
 POST_TWEETS_URL = '/api/tweets/'
@@ -11,6 +12,7 @@ FOLLOW_URL = '/api/friendships/{}/follow/'
 
 class NewsFeedsApiTests(TestCase):
     def setUp(self):
+        self.clear_cache()
         self.anonymous_client = APIClient()
 
         self.linghu = self.create_user('linghu')
@@ -99,3 +101,29 @@ class NewsFeedsApiTests(TestCase):
         self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.data['results'][0]['id'], new_newsfeed.id)
 
+    def test_user_cache(self):
+        profile = self.dongxie.profile
+        profile.nickname = 'huanglaoxie'
+        profile.save()
+        self.assertEqual(self.linghu.username, 'linghu')
+        self.create_newsfeed(self.dongxie, self.create_tweet(self.linghu))
+        self.create_newsfeed(self.dongxie, self.create_tweet(self.dongxie))
+
+        response = self.dongxie_client.get(NEWSFEEDS_URL)
+        results = response.data['results']
+        #pretty_data = json.dumps(results, indent=4)
+        #print(pretty_data)
+        self.assertEqual(results[0]['tweet']['user']['username'], 'dongxie')
+        self.assertEqual(results[0]['tweet']['user']['nickname'], 'huanglaoxie')
+        self.assertEqual(results[1]['tweet']['user']['username'], 'linghu')
+
+        self.linghu.username = 'linghuchong'
+        self.linghu.save()
+        profile.nickname = 'huangyaoshi'
+        profile.save()
+
+        response = self.dongxie_client.get(NEWSFEEDS_URL)
+        results = response.data['results']
+        self.assertEqual(results[0]['tweet']['user']['username'], 'dongxie')
+        self.assertEqual(results[0]['tweet']['user']['nickname'], 'huangyaoshi')
+        self.assertEqual(results[1]['tweet']['user']['username'], 'linghuchong')

@@ -14,6 +14,7 @@ NEWSFEED_LIST_API = '/api/newsfeeds/'
 class CommentApiTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
         self.anonymous_client = APIClient()
         self.linghu = self.create_user('linghu')
         self.linghu_client = APIClient()
