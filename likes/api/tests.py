@@ -9,6 +9,7 @@ TWEET_LIST_API = '/api/tweets/'
 TWEET_DETAIL_API = '/api/tweets/{}/'
 NEWSFEED_LIST_API = '/api/newsfeeds/'
 
+
 class LikeApiTests(TestCase):
 
     def setUp(self):
@@ -25,7 +26,7 @@ class LikeApiTests(TestCase):
         response = self.anonymous_client.post(LIKE_BASE_URL, data)
         self.assertEqual(response.status_code, 403)
 
-        #get is not allowed
+        # get is not allowed
         response = self.linghu_client.get(LIKE_BASE_URL, data)
         self.assertEqual(response.status_code, 405)
 
@@ -53,7 +54,7 @@ class LikeApiTests(TestCase):
         response = self.linghu_client.get(LIKE_BASE_URL, data)
         self.assertEqual(response.status_code, 405)
 
-        #wrong content_type
+        # wrong content_type
         response = self.linghu_client.post(LIKE_BASE_URL, {
             'content_type': 'coment',
             'object_id': comment.id,
@@ -62,7 +63,7 @@ class LikeApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual('content_type' in response.data['errors'], True)
 
-        #wrong object_id
+        # wrong object_id
         response = self.linghu_client.post(LIKE_BASE_URL, {
             'content_type': 'comment',
             'object_id': -1,
@@ -100,21 +101,21 @@ class LikeApiTests(TestCase):
         response = self.linghu_client.get(LIKE_CANCEL_URL, like_comment_data)
         self.assertEqual(response.status_code, 405)
 
-        #wrong content_type
+        # wrong content_type
         response = self.linghu_client.post(LIKE_CANCEL_URL, {
             'content_type': 'wrong',
             'object_id': 1,
         })
         self.assertEqual(response.status_code, 400)
 
-        #wrong object_id
+        # wrong object_id
         response = self.linghu_client.post(LIKE_CANCEL_URL, {
             'content_type': 'comment',
             'object_id': -1,
         })
         self.assertEqual(response.status_code, 400)
 
-        #dongxie has not liked before
+        # dongxie has not liked before
         response = self.dongxie_client.post(LIKE_CANCEL_URL, like_comment_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(tweet.like_set.count(), 1)
@@ -132,12 +133,11 @@ class LikeApiTests(TestCase):
         self.assertEqual(tweet.like_set.count(), 1)
         self.assertEqual(comment.like_set.count(), 0)
 
-        #dongxie like has been cancled
+        # dongxie like has been cancled
         response = self.dongxie_client.post(LIKE_CANCEL_URL, like_tweet_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(tweet.like_set.count(), 0)
         self.assertEqual(comment.like_set.count(), 0)
-
 
     def test_likes_in_comments_api(self):
         tweet = self.create_tweet(self.linghu)
@@ -203,7 +203,6 @@ class LikeApiTests(TestCase):
         self.assertEqual(response.data['likes'][0]['user']['id'], self.linghu.id)
         self.assertEqual(response.data['likes'][1]['user']['id'], self.dongxie.id)
 
-
     def test_likes_count(self):
         tweet = self.create_tweet(self.linghu)
         data = {'content_type': 'tweet', 'object_id': tweet.id}
@@ -222,6 +221,42 @@ class LikeApiTests(TestCase):
         response = self.dongxie_client.get(tweet_url)
         self.assertEqual(response.data['likes_count'], 0)
 
+    def test_likes_count_with_cache(self):
+        tweet = self.create_tweet(self.linghu)
+        self.create_newsfeed(self.linghu, tweet)
+        self.create_newsfeed(self.dongxie, tweet)
 
+        data = {'content_type': 'tweet', 'object_id': tweet.id}
+        tweet_url = TWEET_DETAIL_API.format(tweet.id)
+        for i in range(3):
+            _, client = self.create_user_and_client('someone{}'.format(i))
+            client.post(LIKE_BASE_URL, data)
+            # check tweet api
+            response = client.get(tweet_url)
+            self.assertEqual(response.data['likes_count'], i + 1)
+            tweet.refresh_from_db()
+            self.assertEqual(tweet.likes_count, i + 1)
 
+        self.dongxie_client.post(LIKE_BASE_URL, data)
+        response = self.dongxie_client.get(tweet_url)
+        self.assertEqual(response.data['likes_count'], 4)
+        tweet.refresh_from_db()
+        self.assertEqual(tweet.likes_count, 4)
 
+        # check newsfeed api
+        newsfeed_url = '/api/newsfeeds/'
+        response = self.linghu_client.get(newsfeed_url)
+        self.assertEqual(response.data['results'][0]['tweet']['likes_count'], 4)
+        response = self.dongxie_client.get(newsfeed_url)
+        self.assertEqual(response.data['results'][0]['tweet']['likes_count'], 4)
+
+        # dongxie canceled likes
+        self.dongxie_client.post(LIKE_BASE_URL + 'cancel/', data)
+        tweet.refresh_from_db()
+        self.assertEqual(tweet.likes_count, 3)
+        response = self.dongxie_client.get(tweet_url)
+        self.assertEqual(response.data['likes_count'], 3)
+        response = self.linghu_client.get(newsfeed_url)
+        self.assertEqual(response.data['results'][0]['tweet']['likes_count'], 3)
+        response = self.dongxie_client.get(newsfeed_url)
+        self.assertEqual(response.data['results'][0]['tweet']['likes_count'], 3)
