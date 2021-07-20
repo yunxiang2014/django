@@ -10,6 +10,8 @@ from comments.api.serializers import (
                                       )
 from utils.permissions import IsObjectOwner
 from utils.decorators import required_params
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 
 # Create your views here.
 
@@ -24,6 +26,7 @@ class CommentViewSet(viewsets.GenericViewSet):
     filterset_fields = ('tweet_id',)
 
     @required_params(params=['tweet_id'])
+    @method_decorator(ratelimit(key='user', rate='10/s', method='GET', block=True))
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         # optimization,  prefetch 和 select_related == join
@@ -48,6 +51,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             return [IsAuthenticated(), IsObjectOwner()]
         return [AllowAny()]
 
+    @method_decorator(ratelimit(key='user', rate='3/s', method='GET', block=True))
     def create(self, request, *args, **kwargs):
         data = {
             'user_id': request.user.id,
@@ -71,6 +75,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @method_decorator(ratelimit(key='user', rate='3/s', method='POST', block=True))
     def update(self, request, *args, **kwargs):
         # get_object 是 DRF 包装的一个函数， 会在找不到的时候 raise 404 error
         # 所以这里无需做 额外判断
@@ -91,6 +96,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @method_decorator(ratelimit(key='user', rate='5/s', method='POST', block=True))
     def destroy(self, request, *args, **kwargs):
         comment = self.get_object()
         comment.delete()

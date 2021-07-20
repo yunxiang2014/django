@@ -26,7 +26,7 @@ SECRET_KEY = 'g20q2b3+#2n@x(-u0az^1ptc361%ipvybn=lq)r+l$q0awc#m('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.28.133.163', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '172.31.216.2', 'localhost']
 
 # Application definition
 
@@ -57,6 +57,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
+    'EXCEPTION_HANDLER': 'utils.ratelimit.exception_handler',
 }
 
 MIDDLEWARE = [
@@ -178,15 +179,21 @@ MEDIA_ROOT = 'media/'
 
 CACHES = {
     'default': {
-    'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-    'LOCATION': '127.0.0.1:11211',
-    'TIMEOUT': 86400,
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400,
     },
     'testing': {
-    'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-    'LOCATION': '127.0.0.1:11211',
-    'TIMEOUT': 86400,
-    'PREFIX': 'testing',
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400,
+        'KEY_PREFIX': 'testing',
+    },
+    'ratelimit': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400 * 7,
+        'KEY_PREFIX': 'rl',
     },
 }
 
@@ -211,6 +218,11 @@ CELERY_QUEUES = (
     Queue('default', routing_key='default'),
     Queue('newsfeeds', routing_key='newsfeeds'),
 )
+
+# Rate Limiter
+RATELIMIT_USE_CACHE = 'ratelimit'
+RATELIMIT_CACHE_PREFIX = 'rl:'   # 避免和其他的 key 冲突
+RATELIMIT_ENABLE = not TESTING  # 在某些环境下，比如内部测试等环境下，一般也会关掉
 
 try:
     from .local_settings import *
