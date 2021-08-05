@@ -18,3 +18,9 @@ start memcached
 unsync task
 pip install celery
 prerequirment: redis or rabbitmq was installed on OS
+
+
+# Hbase
+sudo bash bin/start-hbase.sh
+# Hbase thrift
+sudo bin/hbase_deamon.sh start thrift

@@ -26,7 +26,7 @@ SECRET_KEY = 'g20q2b3+#2n@x(-u0az^1ptc361%ipvybn=lq)r+l$q0awc#m('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.31.216.2', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '172.17.111.1', 'localhost']
 
 # Application definition
 
@@ -105,6 +105,9 @@ DATABASES = {
         'PASSWORD': 'yourpassword',  # 这里是自己下载mysql时候输入两次的那个密码
     }
 }
+
+# HBase Database
+HBASE_HOST = '127.0.0.1'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
