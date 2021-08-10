@@ -20,7 +20,14 @@ pip install celery
 prerequirment: redis or rabbitmq was installed on OS
 
 
-# Hbase
+# Hbase       path: cd /home/vagrant/hbase-2.3.5
 sudo bash bin/start-hbase.sh
-# Hbase thrift
-sudo bin/hbase_deamon.sh start thrift
+# Hbase thrift     path:  /home/vagrant/hbase-2.3.5
+sudo bin/hbase-deamon.sh start thrift
+
+
+# git usage
+git checkout -b "branchname"
+git add .
+git commit - m "message"
+git push origin -u branchname
