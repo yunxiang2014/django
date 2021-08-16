@@ -19,6 +19,8 @@ unsync task
 pip install celery
 prerequirment: redis or rabbitmq was installed on OS
 
+# test django     path: cd /project_folder same as setting.py
+python manage.py test
 
 # Hbase       path: cd /home/vagrant/hbase-2.3.5
 sudo bash bin/start-hbase.sh
