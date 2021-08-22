@@ -1,14 +1,17 @@
 from django.contrib.auth.models import User
+from django.utils.decorators import method_decorator
 from friendships.api.paginations import FriendshipPagination
 from friendships.api.serializers import FollowerSerializer, FriendshipSerializerForCreate, FollowingSerializer
+from friendships.hbase_models import HBaseFollower, HBaseFollowing
 from friendships.models import Friendship
 from friendships.services import FriendshipService
+from gatekeeper.models import GateKeeper
+from ratelimit.decorators import ratelimit
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from django.utils.decorators import method_decorator
-from ratelimit.decorators import ratelimit
+from utils.paginations import EndlessPagination
 
 
 class FriendshipViewSet(viewsets.GenericViewSet):
@@ -20,25 +23,33 @@ class FriendshipViewSet(viewsets.GenericViewSet):
     serializer_class = FriendshipSerializerForCreate
     queryset = User.objects.all()
     # 一般来说，不同的 views 所需要的 pagination 规则肯定是不同的，因此一般都需要自定义
-    pagination_class = FriendshipPagination
+    pagination_class = EndlessPagination
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='GET', block=True))
     def followers(self, request, pk):
         # get /api/friendships/1/followers/
         # get http://172.24.76.93:8000/api/friendships/3/followers/
-        friendships = Friendship.objects.filter(to_user_id=pk).order_by('-created_at')
-        page = self.paginate_queryset(friendships)
+        if GateKeeper.is_switch_on('switch_friendship_to_hbase'):
+            page = self.paginator.paginate_hbase(HBaseFollower, (pk,), request)
+        else:
+            friendships = Friendship.objects.filter(to_user_id=pk).order_by('-created_at')
+            page = self.paginate_queryset(friendships)
+
         serializer = FollowerSerializer(page, many=True, context={'request': request})
-        return self.get_paginated_response(serializer.data)
+        return self.paginator.get_paginated_response(serializer.data)
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='GET', block=True))
     def followings(self, request, pk):
-        friendships = Friendship.objects.filter(from_user_id=pk).order_by('-created_at')
-        page = self.paginate_queryset(friendships)
+        if GateKeeper.is_switch_on('switch_friendship_to_hbase'):
+            page = self.paginator.paginate_hbase(HBaseFollowing, (pk,), request)
+        else:
+            friendships = Friendship.objects.filter(from_user_id=pk).order_by('-created_at')
+            page = self.paginate_queryset(friendships)
+
         serializer = FollowingSerializer(page, many=True, context={'request': request})
-        return self.get_paginated_response(serializer.data)
+        return self.paginator.get_paginated_response(serializer.data)
 
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
     @method_decorator(ratelimit(key='user', rate='10/s', method='POST', block=True))
@@ -47,7 +58,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         # self.get_object()
         # 特殊判断重复 follow 的情况 （比如前端猛点多次follow）
         # 静默处理， 不报错， 因为这类重复操作 因为网络延迟的原因会比较多， 没必要当做错误处理
-        if Friendship.objects.filter(from_user=request.user, to_user=pk).exists():
+        if FriendshipService.has_followed(request.user.id, int(pk)):
             return Response({
                 'success': True,
                 'duplicate': True,
@@ -77,17 +88,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
                 'success': False,
                 'message': 'You cannot unfollow yourself',
             }, status=status.HTTP_400_BAD_REQUEST)
-        # https://docs.djangoproject.com/en/3.1/ref/models/quersets/#delete
-        # Queryset 的 delete 操作返回两个值， 一个是删除多少数据， 一个是具体每种类型删除了多少
-        # 为什么会出现多种类型数据的删除？ 因为可以因为 foreign key 设置了 cascade 出现级联
-        # 删除， 也就是 比如 A model 的某个属性是 B model 的 foreign key, 并且设置了 on_delete=models.CASCADE,
-        # 那么当 B 的 莫格数据删除的时候， A 中的关联也会被删除。
-        # 所以 CASCADE 是很危险的， 我们一般最好不用。 而是用 on_delete=models.set_null
-        # 取而代之， 这样至少可以避免误删除带来的多米诺效应
-        deleted, _ = Friendship.objects.filter(
-            from_user=request.user,
-            to_user=unfollow_user,
-        ).delete()
+        deleted = FriendshipService.unfollow(request.user.id, int(pk))
 
         return Response({'success': True, 'deleted': deleted})
 
