@@ -1,3 +1,7 @@
+"""
+Deprecated
+use newsfeeds.hbase_models.HBaseNewsFeed instead
+"""
 from django.contrib.auth.models import User
 from django.db import models
 from tweets.models import Tweet
