@@ -31,3 +31,5 @@ git checkout -b "branchname"
 git add .
 git commit - m "message"
 git push origin -u branchname
+git reset --hard origin
+
